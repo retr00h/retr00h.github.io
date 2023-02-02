@@ -10,3 +10,26 @@ $dark: #212121;
 $card-border-width: 3px;
 
 @import "../node_modules/bootstrap/scss/bootstrap";
+
+.card {
+  border-color: $primary;
+  background-color: $light;
+}
+
+.card-title {
+  color: $primary;
+}
+
+.card-text {
+  color: $secondary;
+}
+
+.card-header {
+  border-color: $primary;
+  color: $secondary;
+}
+
+.card-footer {
+  border-color: $primary;
+  color: $secondary;
+}
