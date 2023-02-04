@@ -1,18 +1,19 @@
-$primary: #6BB2FD;
-$secondary: #FABF5A;
-$success: #13A624;
+$primary: #FD5555;
+$secondary: #11BDD0;
+// $success: #13A624;
 // $info: #FFFFFF;
-$warning: #E6A545;
-$danger: #FB545D;
-$light: #4E4E4E;
-$dark: #212121;
+// $warning: #FFFFFF;
+// $danger: #FFFFFF;
+$light: #0A2D36;
+$dark: #0C2240;
+
 
 $card-border-width: 3px;
 
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 .card {
-  border-color: $primary;
+  border-color: $secondary;
   background-color: $light;
 }
 
@@ -25,11 +26,28 @@ $card-border-width: 3px;
 }
 
 .card-header {
-  border-color: $primary;
+  border-color: $secondary;
   color: $secondary;
 }
 
 .card-footer {
-  border-color: $primary;
+  border-color: $secondary;
   color: $secondary;
+}
+
+.container-hero {
+  background-image: url("../images/abstract_art_background.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.div-hero {
+  border-radius: 8px;
+  border: 2px solid rgba($primary, 0.3);
+}
+
+.frosted {
+  backdrop-filter: blur(20px);
+  background-color: rgba($light, 0.5);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
 }
