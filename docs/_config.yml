@@ -28,10 +28,14 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 linkedin_username: fabio-cirelli-834573177
 github_username: retr00h
 
+paginate: 5
+paginate_path: "/page/:num/"
+
 # Build settings
 theme: minima
 plugins:
   - jekyll-feed
+  - jekyll-paginate
 
 # Exclude from processing.
 # The following items will not be processed, by default.
