@@ -53,13 +53,13 @@ Next, we must find out what show did **Jim** reference in his review. To do so, 
 The first question in this task wants us to **login as administrator**. To do so we must exploit an injectable field in the login form. Let's scroll all the way to the top of the website where we can find the login button, which brings us to the login form in turn. We know that we must use **SQL Injection**, in particular, this is called a **blind SQLi** because we cannot see the output of the query directly. This kind of SQLi also allows us to bypass insecure login forms. We simply input a crafted string in the **email** field, and anything as **password**. Our crafted string is exactly **' OR 1 = 1;--**. This works because the query will likely be something like this:
 
 {% highlight sql %}
-SELECT EXISTS(*) FROM users WHERE email = 'test@test.test' AND password = HASHFUNCTION('password123');
+SELECT EXISTS FROM users WHERE email = 'test@test.test' AND password = HASHFUNCTION('password123');
 {% endhighlight %}
 
 Where **HASHFUNCTION** is not necessarily applied in the database. This is an abstraction because usually (hopefully) passwords are not stored in **plain text**, so we cannot always hope that this kind of SQLi works when using the password field. When an application uses **unsanitized user input**, and a user inputs such a string, the query will become
 
 {% highlight sql %}
-SELECT EXISTS(*) FROM users WHERE email = '' OR 1 = 1;-- AND password = '';
+SELECT EXISTS FROM users WHERE email = '' OR 1 = 1;-- AND password = '';
 {% endhighlight %}
 
 The **--** comments out whatever follows (so we ignore the password checking), while **1 = 1** always evaluates to **TRUE** and since it is put in **OR** with the rest of the query, the query itself will return **TRUE**. Trying it out, we can easily bypass the authentication form, and here is the first flag of this task.
