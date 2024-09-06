@@ -96,7 +96,7 @@ The following queries may be tried to infer the type of **DBMS** being attacked.
 |   Dump user privileges  |      SELECT grantee, privilege_type FROM information_schema.user_privileges WHERE grantee=\'USER_NAME\';      |
 
 
-### Oracle
+#### Oracle
 
 |        **Effect**       |                                                            **Query**                                                           |
 |:-----------------------:|:------------------------------------------------------------------------------------------------------------------------------:|
@@ -109,7 +109,7 @@ The following queries may be tried to infer the type of **DBMS** being attacked.
 |   Dump user privileges  |                                  SELECT * FROM USER_ROLE_PRIVS; SELECT * FROM USER_SYS_PRIVS;                                  |
 
 
-### Microsoft SQL server
+#### Microsoft SQL server
 
 |        **Effect**       |                                                                                                        **Query**                                                                                                       |
 |:-----------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -121,7 +121,7 @@ The following queries may be tried to infer the type of **DBMS** being attacked.
 |    Is user superadmin   |                                                                                         SELECT is_srvrolemember(\'sysadmin\');                                                                                         |
 |   Dump user privileges  | SELECT dp_principal.name, dp.permission_name FROM sys.database_permissions dp JOIN sys.database_principals dp_principals ON dp.grantee_principal_id = dp_principal.principal_id WHERE dp_principal.name=\'USER_NAME\'; |
 
-### PostgreSQL
+#### PostgreSQL
 
 |        **Effect**       |                                                   **Query**                                                   |
 |:-----------------------:|:-------------------------------------------------------------------------------------------------------------:|
@@ -147,13 +147,13 @@ An empty **secure_file_priv** variable (*i.e.* **\'\'**) allows file operations 
 | Determine secure_file_priv value | SHOW VARIABLES LIKE \'secure_file_priv\'; <br> SELECT variable_name, variable_value FROM information_schema.global_variables WHERE variable_name=\'secure_file_priv\'; |
 |           Write to file          |                                                            SELECT \"Hello World!\" INTO OUTFILE \'/path/to/file\';                                                           |
 
-### Oracle
+#### Oracle
 
 
 
-### Microsoft SQL server
+#### Microsoft SQL server
 
 
 
-### PostgreSQL
+#### PostgreSQL
 
