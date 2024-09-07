@@ -1,0 +1,79 @@
+---
+layout: post
+title:  "Cap - Hack The Box writeup"
+date:   2024-09-07 18:10:00 +0200
+categories: hackthebox ctf writeup
+---
+
+{:refdef: style="text-align: center;"}
+[![Challenge logo](/assets/cap/0_title.png)](/assets/cap/0_title.png){:target="_blank"}
+{:refdef}
+
+**CTF Name**: [Cap](https://app.hackthebox.com/machines/Cap){:target="_blank"}  
+**Description**: Cap is an easy difficulty Linux machine running an HTTP server that performs administrative functions including performing network captures. Improper controls result in Insecure Direct Object Reference (IDOR) giving access to another user's capture. The capture contains plaintext credentials and can be used to gain foothold. A Linux capability is then leveraged to escalate to root.  
+**Categories**: Linux, Web Application, IDOR, Privilege Escalation  
+**Difficulty**: Easy  
+
+The usual **nmap** scan reveals **3** open ports. This is already an answer to the **first question** of the guided mode.
+
+{:refdef: style="text-align: center;"}
+[![Nmap scanning](/assets/cap/1_nmap.png)](/assets/cap/1_nmap.png){:target="_blank"}
+{:refdef}
+
+As **nmap** finishes its job, we can already visit the **website** that is exposed on port **80**. It looks like a **dashboard** that keeps track of some **security events**.
+
+{:refdef: style="text-align: center;"}
+[![Website](/assets/cap/2_dashbnoard.png)](/assets/cap/2_dashbnoard.png){:target="_blank"}
+{:refdef}
+
+Exploring the tabs we can see on the left side of the page, the next one is relative to a "**security snapshot**". Some seconds after clicking on it we reach another page. The new **URL** contains the answer for the **second question** of the guided mode.
+
+{:refdef: style="text-align: center;"}
+[![Security snaphsot](/assets/cap/3_security_snapshot.png)](/assets/cap/3_security_snapshot.png){:target="_blank"}
+{:refdef}
+
+We can see that this dashboard accesses data through a **number** in the **URL**. If we change that number we could be able to access other users' scans, assuming the application is **insecure**. Indeed, this assumption turns out to be **true**, also revealing the answer for the **third question** of the guided mode.
+
+{:refdef: style="text-align: center;"}
+[![IDOR vulnerability](/assets/cap/4_idor.png)](/assets/cap/4_idor.png){:target="_blank"}
+{:refdef}
+
+Let's try downloading the **PCAP** file corresponding to the **id 0** through the **download button**. We're lucky as this is the first **IDOR** we tried and it is already useful! As a matter of fact, reading through the packets we can see **Nathan's password** in **plain text**! This also reveals the answer of the **fourth question** of the guided mode.
+
+{:refdef: style="text-align: center;"}
+[![Network traffic analysis](/assets/cap/5_pcap.png)](/assets/cap/5_pcap.png){:target="_blank"}
+{:refdef}
+
+To answer the next question we should simply look at it. It asks about what **service** does this password belong. We can see it on the line right below the one we saw the password at: it refers to port **21**, therefore, it is Nathan's password for the **FTP** service.
+
+We can try accessing this machine through **FTP**. Running **ls** reveals the **user.txt** file, which our **user flag**, and we can download it to our attacking machine via **get user.txt**.
+
+{:refdef: style="text-align: center;"}
+[![FTP and user flag](/assets/cap/6_ftp.png)](/assets/cap/6_ftp.png){:target="_blank"}
+{:refdef}
+
+If we are lucky, Nathan is also using this password to login via **SSH**. Let's try it... and **we're in**! (Spoiler: this answers the **sixth question** of the guided mode!).
+
+{:refdef: style="text-align: center;"}
+[![SSHing into the machine](/assets/cap/7_ssh.png)](/assets/cap/7_ssh.png){:target="_blank"}
+{:refdef}
+
+After SSHing into the target machine and exploring the current directory via **ls**, we can see that Nathan has made a gift to us! As a matter of fact, he left the **linpeas** script in his home directory. This will allow us to easily find at least some vulnerability in his system. Running linpeas with **./linpeas.sh** there is something instantly catching our eyes (mostly because of its **highlighting**). That is the **python3.8** binary having **capabilities** enabled. This means that this binary can run with a subset of the **root privileges** that we are looking for. Looking into [GTFObins](https://gtfobins.github.io/) we can see that this binary only requires the **CAP_SETUID** bit set to be useful as a **privilege escalation vector**. As the bit is **set** we can proceed in exploiting the binary as per **GTFObins** instructions. Notice how the path of this binary is also the answer to the **eighth** question of the guided mode.
+
+{:refdef: style="text-align: center;"}
+[![Linpeas](/assets/cap/8_linpeas.png)](/assets/cap/8_linpeas.png){:target="_blank"}
+{:refdef}
+
+Running the following line will give us our beloved root shell!
+
+{% highlight bash %}
+
+/usr/bin/python3.8 -c 'import os; os.setuid(0); os.system("/bin/sh")'
+
+{% endhighlight %}
+
+We can then explore the **/root** directory and find the **root flag**!
+
+{:refdef: style="text-align: center;"}
+[![Linpeas](/assets/cap/9_root_shell.png)](/assets/cap/9_root_shell.png){:target="_blank"}
+{:refdef}
