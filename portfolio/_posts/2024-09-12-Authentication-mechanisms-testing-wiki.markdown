@@ -4,7 +4,7 @@ title:  "Authentication mechanisms testing wiki"
 date:   2023-09-12 14:21:00 +0200
 categories: wiki
 sticky: true
-permalink: /wiki/auth
+permalink: /portfolio/wiki/auth
 ---
 
 * TOC

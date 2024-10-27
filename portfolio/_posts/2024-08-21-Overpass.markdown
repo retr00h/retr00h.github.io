@@ -167,4 +167,4 @@ Now let’s run a listener on our attacking machine with **nc -lvnp 4444** and m
 
 Normally we would be interested in converting this shell to a fully interactive shell, but as the objective - the **root flag** - is right around the corner we can just reach it this way.
 
-If you’re interested in converting this shell in a fully interactive one, you can read how to in my previous writeup, [LazyAdmin]({% link _posts/2024-08-19-Lazy-Admin.markdown %})!
+If you’re interested in converting this shell in a fully interactive one, you can read how to in my previous writeup, [LazyAdmin]({% link portfolio/_posts/2024-08-19-Lazy-Admin.markdown %})!

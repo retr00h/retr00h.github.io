@@ -1,0 +1,115 @@
+---
+layout: default
+---
+
+<div class="posts">
+    <!-- Sort posts by sticky status and date -->
+    {% assign sorted_posts = site.posts | sort: 'date' | reverse %}
+    {% assign sticky_posts = sorted_posts | where: 'sticky', true %}
+    {% assign non_sticky_posts = sorted_posts | where_exp: 'post', 'post.sticky != true' %}
+  
+    <!-- Display sticky posts first -->
+    {% for post in sticky_posts %}
+      <article class="post sticky">
+        <h2>
+          <!-- Add the pin icon here -->
+          📌 <a href="{{ post.url }}">{{ post.title }}</a>
+        </h2>
+        <p>{{ post.date | date: "%B %-d, %Y" }}</p>
+        <p>{{ post.excerpt }}</p>
+      </article>
+    {% endfor %}
+  
+    <!-- Display non-sticky posts -->
+    {% for post in non_sticky_posts %}
+      <article class="post">
+        <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
+        <p>{{ post.date | date: "%B %-d, %Y" }}</p>
+        <p>{{ post.excerpt }}</p>
+      </article>
+    {% endfor %}
+  </div>
+  
+  <!-- Pagination Controls -->
+  <div class="pagination">
+      {% if paginator.previous_page %}
+        <a href="{{ paginator.previous_page_path }}" class="prev">Previous</a>
+      {% else %}
+        <span class="prev disabled">Previous</span>
+      {% endif %}
+    
+      {% if paginator.next_page %}
+        <a href="{{ paginator.next_page_path }}" class="next">Next</a>
+      {% else %}
+        <span class="next disabled">Next</span>
+      {% endif %}
+    </div>
+  
+  <style>
+      /* Existing styles */
+      .post {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+    
+      .sticky {
+        background-color: #f5f5f5;
+        border-left: 4px solid #007bff;
+      }
+    
+      h2 {
+        margin-bottom: 5px;
+      }
+    
+      p {
+        margin-bottom: 15px;
+      }
+    
+      .sticky h2 {
+        display: flex;
+        align-items: center;
+      }
+    
+      .sticky h2 i, .sticky h2 img {
+        margin-right: 8px;
+      }
+    
+      /* New styles for excerpt images */
+      .post p img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 10px 0;
+        max-height: 200px; /* Adjust the max height as needed */
+        width: auto;
+        margin-left: 30px;
+      }
+  
+      /* Pagination styles */
+      .pagination {
+        text-align: center;
+        margin-top: 40px;
+      }
+  
+      .pagination a {
+        text-decoration: none;
+        padding: 10px 15px;
+        color: #007bff;
+        border: 1px solid #007bff;
+        margin: 0 5px;
+        border-radius: 5px;
+      }
+  
+      .pagination a:hover {
+        background-color: #007bff;
+        color: #fff;
+      }
+  
+      .pagination .disabled {
+        color: #ccc;
+        border-color: #ccc;
+      }
+  </style>
+    
+  

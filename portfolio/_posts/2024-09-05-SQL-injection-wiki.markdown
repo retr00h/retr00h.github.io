@@ -4,7 +4,7 @@ title:  "SQL injection wiki"
 date:   2023-09-05 17:08:00 +0200
 categories: wiki
 sticky: true
-permalink: /wiki/sqli
+permalink: /portfolio/wiki/sqli
 ---
 
 * TOC
