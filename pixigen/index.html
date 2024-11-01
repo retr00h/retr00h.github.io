@@ -9,21 +9,36 @@
       .customization-section {
         background-color: #f0f0f0;
         padding: 20px;
-        min-height: 100vh; /* Ensures full height for vertical centering */
+        min-height: 100vh;
       }
       .image-section {
         background-color: #e0e0e0;
         padding: 20px;
-        min-height: 100vh; /* Ensures full height for vertical centering */
+        min-height: 100vh;
+      }
+      .text-carousel {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .carousel-text {
+        margin-left: 1em;
+        margin-right: 1em;
+        flex-grow: 1;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+      .btn {
+        font-size: 0.9em;
       }
       @media (max-width: 576px) {
         .customization-section {
-          height: 50vh; /* Occupies top half of the viewport */
+          height: 50vh;
           min-height: 50vh;
         }
-        
         .image-section {
-          min-height: 50vh; /* Scrollable if content exceeds 50vh */
+          min-height: 50vh;
         }
       }
     </style>
@@ -31,15 +46,75 @@
   <body>
     <div class="container-fluid">
       <div class="row">
-        <div class="col-lg-6 order-2 order-lg-1 customization-section d-flex justify-content-center align-items-center">
-          <h2>Left Section (Bottom on Smaller Screens)</h2>
+        <div class="col-lg-6 order-2 order-lg-1 customization-section d-flex flex-column justify-content-center align-items-center">
+          <h2 class="text-center">Customize your pixel-persona</h2>
+          
+          <!-- Text Carousel Elements -->
+          <div class="text-carousel">
+            <button class="btn btn-primary-outline btn-prev">&lt;</button>
+            <div class="carousel-text" id="hairSelector">Option 1</div>
+            <button class="btn btn-primary-outline btn-next">&gt;</button>
+          </div>
+
+          <div class="text-carousel">
+            <button class="btn btn-primary-outline btn-prev">&lt;</button>
+            <div class="carousel-text" id="eyeDimensionSelector">Small</div>
+            <button class="btn btn-primary-outline btn-next">&gt;</button>
+          </div>
+
+          <div class="text-carousel">
+            <button class="btn btn-primary-outline btn-prev">&lt;</button>
+            <div class="carousel-text" id="carouselText3">Selection X</div>
+            <button class="btn btn-primary-outline btn-next">&gt;</button>
+          </div>
+
+          <div class="text-carousel">
+            <button class="btn btn-primary-outline btn-prev">&lt;</button>
+            <div class="carousel-text" id="carouselText4">Preset Alpha</div>
+            <button class="btn btn-primary-outline btn-next">&gt;</button>
+          </div>
+          
         </div>
         <div class="col-lg-6 order-1 order-lg-2 image-section d-flex justify-content-center align-items-center">
-          <h2>Right Section (Top on Smaller Screens)</h2>
+          <h2>Right Section</h2>
         </div>
       </div>
     </div>
 
+    <script>
+      // Define predefined options for each carousel
+      const options = [
+        ["Very short", "Short", "Normal", "Long"],
+        ["Small", "Normal", "Large"],
+        ["Selection X", "Selection Y", "Selection Z"],
+        ["Preset Alpha", "Preset Beta", "Preset Gamma"]
+      ];
+
+      // Initialize each carousel element
+      document.querySelectorAll('.text-carousel').forEach((carousel, index) => {
+        const textElement = carousel.querySelector('.carousel-text');
+        let currentIndex = 0;
+
+        // Update displayed text
+        function updateText() {
+          textElement.textContent = options[index][currentIndex];
+        }
+
+        // Add event listeners for previous and next buttons
+        carousel.querySelector('.btn-prev').addEventListener('click', () => {
+          currentIndex = (currentIndex - 1 + options[index].length) % options[index].length;
+          updateText();
+        });
+
+        carousel.querySelector('.btn-next').addEventListener('click', () => {
+          currentIndex = (currentIndex + 1) % options[index].length;
+          updateText();
+        });
+
+        updateText();
+      });
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>
